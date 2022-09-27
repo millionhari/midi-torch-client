@@ -6,118 +6,102 @@
  * @flow strict-local
  */
 
-import React, { useState } from 'react';
+import React, {useState, useEffect} from 'react';
 import Torch from 'react-native-torch';
-import type {Node} from 'react';
+import database from '@react-native-firebase/database';
 import {
   SafeAreaView,
-  ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
-  useColorScheme,
   View,
+  TouchableOpacity,
+  ImageBackground,
 } from 'react-native';
-
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
-
 /* $FlowFixMe[missing-local-annot] The type annotation(s) required by Flow's
  * LTI update could not be added via codemod */
-const Section = ({children, title}): Node => {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-};
 
-const App: () => Node = () => {
-  const isDarkMode = useColorScheme() === 'dark';
+const bgImage = require('./ios/MidiTorchClient/Images.xcassets/fkcbg.imageset/fkcbg.jpg');
+
+const App = () => {
   const [isTorchOn, setIsTorchOn] = useState(false);
 
   const handlePress = () => {
     Torch.switchState(!isTorchOn);
     setIsTorchOn(!isTorchOn);
-  }
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+    console.log(isTorchOn);
   };
 
+  useEffect(() => {
+    const onValueChange = database()
+      .ref('/band/forkingandcountry')
+      .on('value', snapshot => {
+        switch (snapshot.val().key) {
+          case 'G9':
+            Torch.switchState(true);
+            setIsTorchOn(true);
+            console.log('on');
+            break;
+          case 'F#9':
+            Torch.switchState(false);
+            setIsTorchOn(false);
+            console.log('off');
+            break;
+        }
+      });
+
+    // Stop listening for updates when no longer required
+    return () =>
+      database().ref('/band/forkingandcountry').off('value', onValueChange);
+  }, []);
+
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.js</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
+    <SafeAreaView style={styles.container}>
+      <View>
+        <ImageBackground
+          source={bgImage}
+          resizeMode="cover"
+          style={styles.image}>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            style={styles.buttonStyle}
+            onPress={handlePress}>
+            <Text style={styles.buttonTextStyle}>
+              {isTorchOn ? 'Turn off flashlight' : 'Turn on flashlight'}
+            </Text>
+          </TouchableOpacity>
+        </ImageBackground>
+      </View>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  container: {
+    flex: 1,
+    padding: 10,
+    justifyContent: 'center',
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
+  titleText: {
+    fontSize: 22,
+    textAlign: 'center',
+    fontWeight: 'bold',
   },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
+  buttonStyle: {
+    justifyContent: 'center',
+    marginTop: 15,
+    padding: 10,
+    backgroundColor: '#a2ae9d',
+    marginRight: 2,
+    marginLeft: 2,
   },
-  highlight: {
-    fontWeight: '700',
+  buttonTextStyle: {
+    color: '#fff',
+    textAlign: 'center',
+  },
+  image: {
+    justifyContent: 'center',
+    height: '105%',
+    top: -40,
   },
 });
 
